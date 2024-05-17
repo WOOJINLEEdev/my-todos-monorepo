@@ -1,0 +1,15 @@
+{
+  "name": "my-todos-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "front": "pnpm -F my-todos",
+    "backend": "pnpm -F my-todos-server",
+    "dev": "pnpm -r dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
