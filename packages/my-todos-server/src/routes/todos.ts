@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 import { validateData } from "../middleware/validationMiddleware";
 import { todoSchema } from "../schemas/todoSchemas";
@@ -16,140 +17,118 @@ export const configs = {
 };
 
 const router = express.Router();
-const knex = require("knex")({
-  client: configs.client,
-  connection: {
-    host: configs.host,
-    port: configs.port,
-    user: configs.username,
-    password: configs.password,
-    database: configs.database,
-  },
-});
+const prisma = new PrismaClient();
 
-//
-// "INSERT INTO todolist (todo, completed) VALUES (?, ?)";
 router.post("/", validateData(todoSchema), async (req, res) => {
   try {
     const { todo, completed } = req.body;
-    const [insertId] = await knex("todolist").insert({ todo, completed });
 
-    res.json({ id: insertId, todo: todo, completed: completed });
+    const newTodo = await prisma.todolist.create({
+      data: {
+        todo: todo,
+        completed: completed,
+      },
+    });
+
+    res.status(201).json(newTodo);
   } catch (err) {
-    console.error("Error adding todo:", err);
-    res.status(500).send("새로운 todo 추가 중 오류가 발생했습니다.");
+    console.error("새로운 Todo 추가 중 오류 발생", err);
+    res.status(500).send("새로운 Todo 추가 중 오류 발생");
   }
 });
 
-//
-// "SELECT * FROM todolist"
-// "SELECT * FROM todolist WHERE completed = false"
-// "SELECT * FROM todolist WHERE completed = true"
 router.get("/", async (req, res) => {
   const filter = req.query?.filter || "all";
   let remain;
   let total;
 
-  await knex("todolist")
-    .select("*")
-    .then((results) => {
-      const activeCount = results?.filter((result) => !result.completed).length;
-      const totalCount = results?.length;
+  try {
+    const todolist = await prisma.todolist.findMany();
+    const activeCount = todolist?.filter((result) => !result.completed).length;
+    const totalCount = todolist?.length;
 
-      remain = activeCount;
-      total = totalCount;
-    })
-    .catch((err) => {
-      console.error("todolist 불러오는 중 오류가 발생했습니다.", err);
-      res.status(500).send("todolist 불러오는 중 오류가 발생했습니다.");
-      return;
-    });
+    remain = activeCount;
+    total = totalCount;
+  } catch (err) {
+    console.error("Todolist 불러오는 중 오류 발생", err);
+    res.status(500).send("Todolist 불러오는 중 오류 발생");
+  }
 
   if (filter === "all") {
-    await knex("todolist")
-      .select("*")
-      .then((results) => {
-        const modifiedResults = results?.map((result) => ({
-          id: result.id,
-          todo: result.todo,
-          completed: result.completed === 1,
-          created_at: result.created_at,
-        }));
+    try {
+      const todolist = await prisma.todolist.findMany();
+      const modifiedTodolist = todolist?.map((todo) => ({
+        id: todo.id,
+        todo: todo.todo,
+        completed: todo.completed === true,
+        created_at: todo.created_at,
+      }));
 
-        res.json({ data: modifiedResults, remain: remain, total: total });
-        return;
-      })
-      .catch((err) => {
-        console.error("todolist 불러오는 중 오류가 발생했습니다.", err);
-        res.status(500).send("todolist 불러오는 중 오류가 발생했습니다.");
-        return;
-      });
+      res.json({ data: modifiedTodolist, remain: remain, total: total });
+    } catch (err) {
+      console.error("Todolist 불러오는 중 오류 발생", err);
+      res.status(500).send("Todolist 불러오는 중 오류 발생");
+    }
   }
 
   if (filter === "active") {
-    await knex
-      .select("*")
-      .from("todolist")
-      .where("completed", false)
-      .then((results) => {
-        const activeTodolist = results.filter((result) => !result.completed);
-        const modifiedActiveTodolist = activeTodolist?.map((result) => ({
-          id: result.id,
-          todo: result.todo,
-          completed: result.completed === 1,
-          created_at: result.created_at,
-        }));
-
-        res.json({
-          data: modifiedActiveTodolist,
-          remain: remain,
-          total: total,
-        });
-        return;
-      })
-      .catch((err) => {
-        console.error("Error fetching active todolist:", err);
-        res.status(500).send("Error fetching active todolist.");
-        return;
+    try {
+      const activeTodolist = await prisma.todolist.findMany({
+        where: {
+          completed: false,
+        },
       });
+      const modifiedActiveTodolist = activeTodolist?.map((todo) => ({
+        id: todo.id,
+        todo: todo.todo,
+        completed: todo.completed === true,
+        created_at: todo.created_at,
+      }));
+
+      res.json({
+        data: modifiedActiveTodolist,
+        remain: remain,
+        total: total,
+      });
+    } catch (err) {
+      console.error("Active todo를 불러오는 중 오류 발생", err);
+      res.status(500).send("Active todo를 불러오는 중 오류 발생");
+    }
   }
 
   if (filter === "completed") {
-    await knex
-      .select("*")
-      .from("todolist")
-      .where("completed", true)
-      .then((results) => {
-        const completedTodolist = results.filter((result) => result.completed);
-        const modifiedCompletedTodolist = completedTodolist?.map((result) => ({
-          id: result.id,
-          todo: result.todo,
-          completed: result.completed === 1,
-          created_at: result.created_at,
-        }));
-
-        res.json({
-          data: modifiedCompletedTodolist,
-          remain: remain,
-          total: total,
-        });
-      })
-      .catch((err) => {
-        console.error("Error fetching completed todolist:", err);
-        res.status(500).send("Error fetching completed todolist.");
-        return;
+    try {
+      const completedTodolist = await prisma.todolist.findMany({
+        where: {
+          completed: true,
+        },
       });
+      const modifiedCompletedTodolist = completedTodolist?.map((todo) => ({
+        id: todo.id,
+        todo: todo.todo,
+        completed: todo.completed === true,
+        created_at: todo.created_at,
+      }));
+
+      res.json({
+        data: modifiedCompletedTodolist,
+        remain: remain,
+        total: total,
+      });
+    } catch (err) {
+      console.error("Completed todo를 불러오는 중 오류 발생", err);
+      res.status(500).send("Completed todo를 불러오는 중 오류 발생");
+    }
   }
 });
 
-//
-// "UPDATE todolist SET field WHERE id = ?"
 router.put("/:id", validateData(todoSchema), async (req, res) => {
-  try {
-    const todoId = req.params.id;
-    const { todo, completed }: { todo?: string; completed?: string } = req.body;
+  const todoId = req.params.id;
 
+  try {
+    const { todo, completed }: { todo?: string; completed?: string } = req.body;
     let field;
+
     if (todo !== undefined) {
       field = { todo: todo };
     }
@@ -163,55 +142,66 @@ router.put("/:id", validateData(todoSchema), async (req, res) => {
       return;
     }
 
-    await knex("todolist").where("id", todoId).update(field);
+    await prisma.todolist.update({
+      where: {
+        id: Number(todoId),
+      },
+      data: field,
+    });
 
-    res.status(200).send("Todo updated successfully.");
+    res.status(200).send(`${todoId} Todo 업데이트 성공`);
   } catch (err) {
-    console.error("Error updating todo:", err);
-    res.status(500).send("Error updating todo.");
+    console.error(`${todoId} Todo 업데이트 실패`, err);
+    res.status(500).send(`${todoId} Todo 업데이트 실패`);
     return;
   }
 });
 
-//
-// "UPDATE todolist SET completed = ?"
 router.put("/completed/update", validateData(todoSchema), async (req, res) => {
   const { completed } = req.body;
 
-  await knex("todolist")
-    .update({ completed: completed })
-    .then(() => {
-      res.status(200).send("Completed Todo updated successfully.");
-    })
-    .catch((err) => {
-      console.error("Error updating completed field:", err);
-      res.status(500).send("Error updating completed field.");
-    });
-});
-
-//
-// "DELETE FROM todolist WHERE id = ?"
-router.delete("/:id", validateData(todoSchema), async (req, res) => {
   try {
-    const todoId = req.params.id;
-    await knex("todolist").where("id", todoId).del();
-    res.json({ message: "Todo deleted successfully.", id: todoId });
+    await prisma.todolist.updateMany({
+      data: {
+        completed: completed,
+      },
+    });
+    res.status(200).send("Completed Todos 업데이트 성공");
   } catch (err) {
-    res.status(500).send("Error deleting todo.");
+    console.error("Completed Todos 업데이트 실패", err);
+    res.status(500).send("Completed Todo 업데이트 실패");
   }
 });
 
-//
-// "DELETE FROM todolist WHERE completed = 1"
+router.delete("/:id", validateData(todoSchema), async (req, res) => {
+  try {
+    const todoId = req.params.id;
+    await prisma.todolist.delete({
+      where: {
+        id: Number(todoId),
+      },
+    });
+
+    res.json(`${todoId} Todo 삭제 성공`);
+  } catch (err) {
+    res.status(500).send("Todo 삭제 실패");
+  }
+});
+
 router.delete(
   "/completed/clear",
   validateData(todoSchema),
   async (req, res) => {
     try {
-      await knex("todolist").where("completed", true).del();
-      res.json({ message: "Completed todo deleted successfully" });
+      await prisma.todolist.deleteMany({
+        where: {
+          completed: true,
+        },
+      });
+
+      res.json({ message: "Completed Todos 삭제 성공" });
     } catch (err) {
-      res.status(500).send("Error deleting completed todo.");
+      res.status(500).send("Completed Todos 삭제 실패");
     }
   }
 );
