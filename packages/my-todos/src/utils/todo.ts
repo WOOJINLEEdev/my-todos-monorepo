@@ -14,7 +14,7 @@ export async function getTodos(filter: string) {
 }
 
 export async function createTodoItem(todo: string) {
-  await fetch(`${baseUrl}`, {
+  await fetch(`${baseUrl}/todos`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
