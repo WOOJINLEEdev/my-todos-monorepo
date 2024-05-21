@@ -1,23 +1,10 @@
 import express from "express";
-import dotenv from "dotenv";
-import { PrismaClient } from "@prisma/client";
 
 import { validateData } from "../middleware/validationMiddleware";
 import { todoSchema } from "../schemas/todoSchemas";
-
-dotenv.config({ path: ".env.local" });
-
-export const configs = {
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 3306,
-  username: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "admin",
-  database: process.env.DB_NAME || "database",
-  client: process.env.DIALECT || "mysql",
-};
+import { prisma } from "../lib/prisma";
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 router.post("/", validateData(todoSchema), async (req, res) => {
   try {
