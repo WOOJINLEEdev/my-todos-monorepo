@@ -1,8 +1,10 @@
 import express from "express";
+import dotenv from "dotenv";
 import cors from "cors";
 
-const todosRoutes = require("./routes/todos");
+dotenv.config({ path: ".env.local" });
 
+const todosRoutes = require("./routes/todos");
 const app = express();
 const port = 3000;
 
