@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const todoSchema = z
+export const todosSchema = z
   .object({
     id: z.number(),
     todo: z.string(),

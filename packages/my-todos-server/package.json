@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "prisma format && prisma generate && pnpm prisma:db && tsx watch src/index.ts",
+    "dev": "prisma format && prisma generate && pnpm prisma:db && dotenv -e .env.local -- tsx watch src/index.ts",
     "prisma:db": "dotenv -e .env.local -- prisma db push",
     "tsc": "tsc --init",
     "prisma": "echo \"Error: no test specified\" && exit 1"

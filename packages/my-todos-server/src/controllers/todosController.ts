@@ -1,36 +1,35 @@
-import express from "express";
+import { Request, Response } from "express";
 
-import { validateData } from "../middleware/validationMiddleware";
-import { todoSchema } from "../schemas/todoSchemas";
-import { prisma } from "../lib/prisma";
+import {
+  addTodoItem,
+  deleteCompletedTodolist,
+  deleteTodoItem,
+  getActiveTodolist,
+  getCompletedTodolist,
+  getTodolist,
+  modifyCompletedTodolist,
+  modifyTodoItem,
+} from "../services/todosService";
+import { TodoField } from "../models/todosModel";
 
-const router = express.Router();
-
-router.post("/", validateData(todoSchema), async (req, res) => {
+export const createTodo = async (req: Request, res: Response) => {
   try {
     const { todo, completed } = req.body;
-
-    const newTodo = await prisma.todolist.create({
-      data: {
-        todo: todo,
-        completed: completed,
-      },
-    });
-
+    const newTodo = await addTodoItem(todo, completed);
     res.status(201).json(newTodo);
   } catch (err) {
     console.error("새로운 Todo 추가 중 오류 발생", err);
     res.status(500).send("새로운 Todo 추가 중 오류 발생");
   }
-});
+};
 
-router.get("/", async (req, res) => {
+export const getTodosByFilter = async (req: Request, res: Response) => {
   const filter = req.query?.filter || "all";
   let remain;
   let total;
 
   try {
-    const todolist = await prisma.todolist.findMany();
+    const todolist = await getTodolist();
     const activeCount = todolist?.filter((result) => !result.completed).length;
     const totalCount = todolist?.length;
 
@@ -43,7 +42,7 @@ router.get("/", async (req, res) => {
 
   if (filter === "all") {
     try {
-      const todolist = await prisma.todolist.findMany();
+      const todolist = await getTodolist();
       const modifiedTodolist = todolist?.map((todo) => ({
         id: todo.id,
         todo: todo.todo,
@@ -60,11 +59,7 @@ router.get("/", async (req, res) => {
 
   if (filter === "active") {
     try {
-      const activeTodolist = await prisma.todolist.findMany({
-        where: {
-          completed: false,
-        },
-      });
+      const activeTodolist = await getActiveTodolist();
       const modifiedActiveTodolist = activeTodolist?.map((todo) => ({
         id: todo.id,
         todo: todo.todo,
@@ -85,11 +80,7 @@ router.get("/", async (req, res) => {
 
   if (filter === "completed") {
     try {
-      const completedTodolist = await prisma.todolist.findMany({
-        where: {
-          completed: true,
-        },
-      });
+      const completedTodolist = await getCompletedTodolist();
       const modifiedCompletedTodolist = completedTodolist?.map((todo) => ({
         id: todo.id,
         todo: todo.todo,
@@ -107,13 +98,13 @@ router.get("/", async (req, res) => {
       res.status(500).send("Completed todo를 불러오는 중 오류 발생");
     }
   }
-});
+};
 
-router.put("/:id", validateData(todoSchema), async (req, res) => {
+export const updateTodo = async (req: Request, res: Response) => {
   const todoId = req.params.id;
 
   try {
-    const { todo, completed }: { todo?: string; completed?: string } = req.body;
+    const { todo, completed }: { todo: string; completed: boolean } = req.body;
     let field;
 
     if (todo !== undefined) {
@@ -129,12 +120,7 @@ router.put("/:id", validateData(todoSchema), async (req, res) => {
       return;
     }
 
-    await prisma.todolist.update({
-      where: {
-        id: Number(todoId),
-      },
-      data: field,
-    });
+    await modifyTodoItem(Number(todoId), field as TodoField);
 
     res.status(200).send(`${todoId} Todo 업데이트 성공`);
   } catch (err) {
@@ -142,55 +128,37 @@ router.put("/:id", validateData(todoSchema), async (req, res) => {
     res.status(500).send(`${todoId} Todo 업데이트 실패`);
     return;
   }
-});
+};
 
-router.put("/completed/update", validateData(todoSchema), async (req, res) => {
+export const updateCompletedTodos = async (req: Request, res: Response) => {
   const { completed } = req.body;
 
   try {
-    await prisma.todolist.updateMany({
-      data: {
-        completed: completed,
-      },
-    });
+    await modifyCompletedTodolist(completed);
     res.status(200).send("Completed Todos 업데이트 성공");
   } catch (err) {
     console.error("Completed Todos 업데이트 실패", err);
     res.status(500).send("Completed Todo 업데이트 실패");
   }
-});
+};
 
-router.delete("/:id", validateData(todoSchema), async (req, res) => {
+export const deleteTodo = async (req: Request, res: Response) => {
   try {
     const todoId = req.params.id;
-    await prisma.todolist.delete({
-      where: {
-        id: Number(todoId),
-      },
-    });
+    await deleteTodoItem(Number(todoId));
 
     res.json(`${todoId} Todo 삭제 성공`);
   } catch (err) {
     res.status(500).send("Todo 삭제 실패");
   }
-});
+};
 
-router.delete(
-  "/completed/clear",
-  validateData(todoSchema),
-  async (req, res) => {
-    try {
-      await prisma.todolist.deleteMany({
-        where: {
-          completed: true,
-        },
-      });
+export const deleteCompletedTodos = async (req: Request, res: Response) => {
+  try {
+    await deleteCompletedTodolist();
 
-      res.json({ message: "Completed Todos 삭제 성공" });
-    } catch (err) {
-      res.status(500).send("Completed Todos 삭제 실패");
-    }
+    res.json({ message: "Completed Todos 삭제 성공" });
+  } catch (err) {
+    res.status(500).send("Completed Todos 삭제 실패");
   }
-);
-
-module.exports = router;
+};
