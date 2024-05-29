@@ -40,8 +40,8 @@ export async function updateTodoItem({
 }
 
 export async function updateTodosAllChecked(check: boolean) {
-  await fetch(`${baseUrl}/todos/completed/update`, {
-    method: "PUT",
+  await fetch(`${baseUrl}/todos/completed`, {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
@@ -50,7 +50,7 @@ export async function updateTodosAllChecked(check: boolean) {
 }
 
 export async function deleteCompletedTodos() {
-  await fetch(`${baseUrl}/todos/completed/clear`, {
+  await fetch(`${baseUrl}/todos/completed`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

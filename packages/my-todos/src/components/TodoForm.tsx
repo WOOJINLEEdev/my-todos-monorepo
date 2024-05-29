@@ -76,9 +76,9 @@ const TodoApiForm = () => {
     async function getTodoList() {
       try {
         const res = await getTodos(clickedFilter);
-        setTodoList(res.data);
-        setRemain(res.remain);
-        setTotal(res.total);
+        setTodoList(res.data.data);
+        setRemain(res.data.metadata.remain);
+        setTotal(res.data.metadata.total);
         reset({});
       } catch (err) {
         console.error("error : ", err);
