@@ -1,8 +1,10 @@
 import { z } from "zod";
 
-export const todosSchema = z
+import { todoIdSchema } from "./todoIdSchema";
+
+export const todoSchema = z
   .object({
-    id: z.number(),
+    id: todoIdSchema.shape.id,
     todo: z.string(),
     completed: z.boolean(),
   })

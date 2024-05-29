@@ -1,111 +1,59 @@
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
-import {
-  addTodoItem,
-  deleteCompletedTodolist,
-  deleteTodoItem,
-  getActiveTodolist,
-  getCompletedTodolist,
-  getTodolist,
-  modifyCompletedTodolist,
-  modifyTodoItem,
-} from "../services/todosService";
-import { TodoField } from "../models/todosModel";
+import { todosService } from "../services/todosService";
+import { Todo } from "../models/todosModel";
+import { errorResponse, successResponse } from "../lib/responseHelper";
+import HttpError from "../lib/HttpError";
 
-export const createTodo = async (req: Request, res: Response) => {
-  try {
+export const todosController = {
+  createTodo: async (req: Request, res: Response) => {
+    const newTodo = await todosService.addTodoItem(req.body);
+
+    if (!newTodo) {
+      throw new HttpError("Todo 추가 실패", StatusCodes.BAD_REQUEST);
+    }
+
+    successResponse(res, { data: newTodo });
+  },
+
+  getTodos: async (req: Request, res: Response) => {
+    const filter = req.query?.filter || "all";
+
+    const todos = await todosService.getTodos(filter as string);
+
+    if (!todos) {
+      throw new HttpError("Todo 찾기 실패", StatusCodes.NOT_FOUND);
+    }
+
+    successResponse(res, {
+      data: todos?.todos,
+      metadata: { remain: todos?.remain, total: todos?.total },
+    });
+  },
+
+  updateTodo: async (req: Request, res: Response) => {
+    const todoId = parseInt(req.params.id, 10);
+
+    // if (isNaN(todoId)) {
+    //   throw new HttpError(
+    //     "유효하지 않은 id, id는 숫자만 가능",
+    //     StatusCodes.BAD_REQUEST
+    //   );
+    // }
+
     const { todo, completed } = req.body;
-    const newTodo = await addTodoItem(todo, completed);
-    res.status(201).json(newTodo);
-  } catch (err) {
-    console.error("새로운 Todo 추가 중 오류 발생", err);
-    res.status(500).send("새로운 Todo 추가 중 오류 발생");
-  }
-};
-
-export const getTodosByFilter = async (req: Request, res: Response) => {
-  const filter = req.query?.filter || "all";
-  let remain;
-  let total;
-
-  try {
-    const todolist = await getTodolist();
-    const activeCount = todolist?.filter((result) => !result.completed).length;
-    const totalCount = todolist?.length;
-
-    remain = activeCount;
-    total = totalCount;
-  } catch (err) {
-    console.error("Todolist 불러오는 중 오류 발생", err);
-    res.status(500).send("Todolist 불러오는 중 오류 발생");
-  }
-
-  if (filter === "all") {
-    try {
-      const todolist = await getTodolist();
-      const modifiedTodolist = todolist?.map((todo) => ({
-        id: todo.id,
-        todo: todo.todo,
-        completed: todo.completed === true,
-        created_at: todo.created_at,
-      }));
-
-      res.json({ data: modifiedTodolist, remain: remain, total: total });
-    } catch (err) {
-      console.error("Todolist 불러오는 중 오류 발생", err);
-      res.status(500).send("Todolist 불러오는 중 오류 발생");
+    if (todo === undefined && completed === undefined) {
+      errorResponse(res, "todo, completed both undefined");
+      return;
     }
-  }
 
-  if (filter === "active") {
-    try {
-      const activeTodolist = await getActiveTodolist();
-      const modifiedActiveTodolist = activeTodolist?.map((todo) => ({
-        id: todo.id,
-        todo: todo.todo,
-        completed: todo.completed === true,
-        created_at: todo.created_at,
-      }));
-
-      res.json({
-        data: modifiedActiveTodolist,
-        remain: remain,
-        total: total,
-      });
-    } catch (err) {
-      console.error("Active todo를 불러오는 중 오류 발생", err);
-      res.status(500).send("Active todo를 불러오는 중 오류 발생");
+    if (todo && completed) {
+      errorResponse(res, "todo, completed both ");
+      return;
     }
-  }
 
-  if (filter === "completed") {
-    try {
-      const completedTodolist = await getCompletedTodolist();
-      const modifiedCompletedTodolist = completedTodolist?.map((todo) => ({
-        id: todo.id,
-        todo: todo.todo,
-        completed: todo.completed === true,
-        created_at: todo.created_at,
-      }));
-
-      res.json({
-        data: modifiedCompletedTodolist,
-        remain: remain,
-        total: total,
-      });
-    } catch (err) {
-      console.error("Completed todo를 불러오는 중 오류 발생", err);
-      res.status(500).send("Completed todo를 불러오는 중 오류 발생");
-    }
-  }
-};
-
-export const updateTodo = async (req: Request, res: Response) => {
-  const todoId = req.params.id;
-
-  try {
-    const { todo, completed }: { todo: string; completed: boolean } = req.body;
-    let field;
+    let field: Partial<Todo> = {};
 
     if (todo !== undefined) {
       field = { todo: todo };
@@ -115,50 +63,71 @@ export const updateTodo = async (req: Request, res: Response) => {
       field = { completed: completed };
     }
 
-    if (todo === undefined && completed === undefined) {
-      res.status(400).send("No fields to update");
-      return;
+    const result = await todosService.updateTodoItem(todoId, field);
+
+    if (!result) {
+      throw new HttpError(
+        `Todo 업데이트 실패, id: ${todoId}`,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
 
-    await modifyTodoItem(Number(todoId), field as TodoField);
+    successResponse(res, {
+      data: result,
+    });
+  },
 
-    res.status(200).send(`${todoId} Todo 업데이트 성공`);
-  } catch (err) {
-    console.error(`${todoId} Todo 업데이트 실패`, err);
-    res.status(500).send(`${todoId} Todo 업데이트 실패`);
-    return;
-  }
-};
+  updateTodosToCompleted: async (req: Request, res: Response) => {
+    const { completed } = req.body;
 
-export const updateCompletedTodos = async (req: Request, res: Response) => {
-  const { completed } = req.body;
+    // if (typeof completed !== "boolean") {
+    //   throw new HttpError("유효하지 않은 completed", StatusCodes.BAD_REQUEST);
+    // }
 
-  try {
-    await modifyCompletedTodolist(completed);
-    res.status(200).send("Completed Todos 업데이트 성공");
-  } catch (err) {
-    console.error("Completed Todos 업데이트 실패", err);
-    res.status(500).send("Completed Todo 업데이트 실패");
-  }
-};
+    const result = await todosService.updateTodosToCompleted(completed);
 
-export const deleteTodo = async (req: Request, res: Response) => {
-  try {
-    const todoId = req.params.id;
-    await deleteTodoItem(Number(todoId));
+    if (!result) {
+      throw new HttpError(
+        "Completed Todo 업데이트 실패",
+        StatusCodes.BAD_REQUEST
+      );
+    }
 
-    res.json(`${todoId} Todo 삭제 성공`);
-  } catch (err) {
-    res.status(500).send("Todo 삭제 실패");
-  }
-};
+    successResponse(res, undefined, "Completed Todos 업데이트 성공");
+  },
 
-export const deleteCompletedTodos = async (req: Request, res: Response) => {
-  try {
-    await deleteCompletedTodolist();
+  deleteTodo: async (req: Request, res: Response) => {
+    const todoId = parseInt(req.params.id, 10);
 
-    res.json({ message: "Completed Todos 삭제 성공" });
-  } catch (err) {
-    res.status(500).send("Completed Todos 삭제 실패");
-  }
+    // if (isNaN(todoId)) {
+    //   throw new HttpError(
+    //     "유효하지 않은 id, id는 숫자만 가능",
+    //     StatusCodes.BAD_REQUEST
+    //   );
+    // }
+
+    const result = await todosService.deleteTodoItem(todoId);
+
+    if (!result) {
+      throw new HttpError(
+        `Todo 삭제 실패, id: ${todoId}`,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    successResponse(res, undefined, `Todo 삭제 성공, id: ${todoId}`);
+  },
+
+  deleteCompletedTodos: async (req: Request, res: Response) => {
+    const result = await todosService.deleteCompletedTodos();
+
+    if (!result) {
+      throw new HttpError(
+        "Completed Todos 삭제 실패",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    successResponse(res, undefined, "Completed Todos 삭제 성공");
+  },
 };

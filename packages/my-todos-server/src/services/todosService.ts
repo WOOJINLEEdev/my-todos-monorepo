@@ -1,43 +1,80 @@
-import {
-  createTodo,
-  getAllTodos,
-  getActiveTodos,
-  getCompletedTodos,
-  updateTodo,
-  updateCompletedTodos,
-  deleteTodo,
-  deleteCompletedTodos,
-  TodoField,
-} from "../models/todosModel";
+import { Todo, todosModel } from "../models/todosModel";
 
-export const addTodoItem = async (todo: string, completed: boolean) => {
-  return await createTodo(todo, completed);
-};
+export const todosService = {
+  addTodoItem: async (todo: Todo) => {
+    return await todosModel.createTodo(todo);
+  },
 
-export const getTodolist = async () => {
-  return await getAllTodos();
-};
+  getTodos: async (filter: string) => {
+    const { total, remain } = await todosModel.getTodoCount();
 
-export const getActiveTodolist = async () => {
-  return await getActiveTodos();
-};
+    switch (filter) {
+      case "all":
+        try {
+          const todolist = await todosModel.getAllTodos();
+          const modifiedTodolist = todolist?.map((todo) => ({
+            id: todo.id,
+            todo: todo.todo,
+            completed: todo.completed === true,
+            created_at: todo.created_at,
+          }));
 
-export const getCompletedTodolist = async () => {
-  return await getCompletedTodos();
-};
+          return { todos: modifiedTodolist, remain: remain, total: total };
+        } catch (err) {
+          console.error("Todos 불러오는 중 오류 발생", err);
+        }
+        return;
 
-export const modifyTodoItem = async (id: number, field: TodoField) => {
-  return await updateTodo(id, field);
-};
+      case "active":
+        try {
+          const activeTodolist = await todosModel.getActiveTodos();
+          const modifiedActiveTodolist = activeTodolist?.map((todo) => ({
+            id: todo.id,
+            todo: todo.todo,
+            completed: todo.completed === true,
+            created_at: todo.created_at,
+          }));
 
-export const modifyCompletedTodolist = async (completed: boolean) => {
-  return await updateCompletedTodos(completed);
-};
+          return {
+            todos: modifiedActiveTodolist,
+            remain: remain,
+            total: total,
+          };
+        } catch (err) {
+          console.error("Active todo를 불러오는 중 오류 발생", err);
+        }
+        return;
 
-export const deleteTodoItem = async (id: number) => {
-  return await deleteTodo(id);
-};
+      case "completed":
+        try {
+          const completedTodolist = await todosModel.getCompletedTodos();
+          const modifiedCompletedTodolist = completedTodolist?.map((todo) => ({
+            id: todo.id,
+            todo: todo.todo,
+            completed: todo.completed === true,
+            created_at: todo.created_at,
+          }));
 
-export const deleteCompletedTodolist = async () => {
-  return await deleteCompletedTodos();
+          return {
+            todos: modifiedCompletedTodolist,
+            remain: remain,
+            total: total,
+          };
+        } catch (err) {
+          console.error("Completed todo를 불러오는 중 오류 발생", err);
+        }
+    }
+  },
+  updateTodoItem: async (id: number, field: Partial<Todo>) => {
+    return await todosModel.updateTodo(id, field);
+  },
+  updateTodosToCompleted: async (completed: boolean) => {
+    return await todosModel.updateTodosToCompleted(completed);
+  },
+  deleteTodoItem: async (id: number) => {
+    return await todosModel.deleteTodo(id);
+  },
+  deleteCompletedTodos: async () => {
+    return await todosModel.deleteCompletedTodos();
+  },
 };

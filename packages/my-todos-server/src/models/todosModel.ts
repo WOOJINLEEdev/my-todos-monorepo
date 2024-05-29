@@ -1,75 +1,87 @@
 import { prisma } from "../lib/prisma";
 
-export interface TodoField {
-  todo?: string;
-  completed?: boolean;
+export interface Todo {
+  todo: string;
+  completed: boolean;
 }
 
-export const createTodo = async (todo: string, completed: boolean) => {
-  const newTodo = await prisma.todolist.create({
-    data: {
-      todo: todo,
-      completed: completed,
-    },
-  });
+export const todosModel = {
+  createTodo: async (todo: Todo) => {
+    const newTodo = await prisma.todo.create({
+      data: {
+        todo: todo.todo,
+        completed: todo.completed,
+      },
+    });
 
-  return newTodo;
-};
+    return newTodo;
+  },
 
-export const getAllTodos = async () => {
-  const todolist = await prisma.todolist.findMany();
-  return todolist;
-};
+  getTodoCount: async () => {
+    const todoCount = await prisma.todo.count();
+    const activeCount = await prisma.todo.count({
+      where: {
+        completed: false,
+      },
+    });
 
-export const getActiveTodos = async () => {
-  const activeTodos = await prisma.todolist.findMany({
-    where: {
-      completed: false,
-    },
-  });
+    return { total: todoCount, remain: activeCount };
+  },
 
-  return activeTodos;
-};
+  getAllTodos: async () => {
+    return await prisma.todo.findMany();
+  },
 
-export const getCompletedTodos = async () => {
-  const completedTodos = await prisma.todolist.findMany({
-    where: {
-      completed: true,
-    },
-  });
+  getActiveTodos: async () => {
+    const activeTodos = await prisma.todo.findMany({
+      where: {
+        completed: false,
+      },
+    });
 
-  return completedTodos;
-};
+    return activeTodos;
+  },
 
-export const updateTodo = async (id: number, field: TodoField) => {
-  await prisma.todolist.update({
-    where: {
-      id: id,
-    },
-    data: field,
-  });
-};
+  getCompletedTodos: async () => {
+    const completedTodos = await prisma.todo.findMany({
+      where: {
+        completed: true,
+      },
+    });
 
-export const updateCompletedTodos = async (completed: boolean) => {
-  await prisma.todolist.updateMany({
-    data: {
-      completed: completed,
-    },
-  });
-};
+    return completedTodos;
+  },
 
-export const deleteTodo = async (id: number) => {
-  await prisma.todolist.delete({
-    where: {
-      id: id,
-    },
-  });
-};
+  updateTodo: async (id: number, field: Partial<Todo>) => {
+    return await prisma.todo.update({
+      where: {
+        id: id,
+      },
+      data: field,
+    });
+  },
 
-export const deleteCompletedTodos = async () => {
-  await prisma.todolist.deleteMany({
-    where: {
-      completed: true,
-    },
-  });
+  updateTodosToCompleted: async (completed: boolean) => {
+    return await prisma.todo.updateMany({
+      data: {
+        completed: completed,
+      },
+    });
+  },
+
+  deleteTodo: async (id: number) => {
+    return await prisma.todo.delete({
+      where: {
+        id: id,
+      },
+    });
+  },
+
+  deleteCompletedTodos: async () => {
+    return await prisma.todo.deleteMany({
+      where: {
+        completed: true,
+      },
+    });
+  },
 };

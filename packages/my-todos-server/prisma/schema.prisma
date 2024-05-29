@@ -13,7 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model todolist {
+model Todo {
   id         Int      @id @default(autoincrement())
   todo       String
   completed  Boolean
