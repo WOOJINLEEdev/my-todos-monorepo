@@ -155,6 +155,10 @@ const TodoApiForm = () => {
   };
 
   const handleCompletedTodoClear = async () => {
+    if (total === remain) {
+      return;
+    }
+
     setRefetch(true);
     try {
       await deleteCompletedTodos();
