@@ -35,13 +35,6 @@ export const todosController = {
   updateTodo: async (req: Request, res: Response) => {
     const todoId = parseInt(req.params.id, 10);
 
-    // if (isNaN(todoId)) {
-    //   throw new HttpError(
-    //     "유효하지 않은 id, id는 숫자만 가능",
-    //     StatusCodes.BAD_REQUEST
-    //   );
-    // }
-
     const { todo, completed } = req.body;
     if (todo === undefined && completed === undefined) {
       errorResponse(res, "todo, completed both undefined");
@@ -49,7 +42,7 @@ export const todosController = {
     }
 
     if (todo && completed) {
-      errorResponse(res, "todo, completed both ");
+      errorResponse(res, "todo, completed are not received at the same time");
       return;
     }
 
@@ -80,10 +73,6 @@ export const todosController = {
   updateTodosToCompleted: async (req: Request, res: Response) => {
     const { completed } = req.body;
 
-    // if (typeof completed !== "boolean") {
-    //   throw new HttpError("유효하지 않은 completed", StatusCodes.BAD_REQUEST);
-    // }
-
     const result = await todosService.updateTodosToCompleted(completed);
 
     if (!result) {
@@ -98,13 +87,6 @@ export const todosController = {
 
   deleteTodo: async (req: Request, res: Response) => {
     const todoId = parseInt(req.params.id, 10);
-
-    // if (isNaN(todoId)) {
-    //   throw new HttpError(
-    //     "유효하지 않은 id, id는 숫자만 가능",
-    //     StatusCodes.BAD_REQUEST
-    //   );
-    // }
 
     const result = await todosService.deleteTodoItem(todoId);
 
