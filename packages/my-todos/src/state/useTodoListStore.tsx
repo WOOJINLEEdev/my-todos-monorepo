@@ -25,7 +25,7 @@ const useTodoListStore = create<UseTodoListStoreProps>()((set) => ({
   setTodoList: (todos) => {
     set((state) => ({
       ...state,
-      todoList: todos,
+      todoList: [...state.todoList, ...todos],
     }));
   },
   setRemain: (count) => {

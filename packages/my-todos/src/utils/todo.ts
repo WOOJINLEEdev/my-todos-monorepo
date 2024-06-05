@@ -1,7 +1,19 @@
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
-export async function getTodos(filter: string) {
-  const queryParams = new URLSearchParams({ filter: filter });
+export async function getTodos({
+  filter,
+  offset = null,
+  limit = 10,
+}: {
+  filter: string;
+  offset: number | null;
+  limit?: number;
+}) {
+  const queryParams = new URLSearchParams({
+    filter: filter,
+    limit: String(limit),
+    offset: String(offset),
+  });
   const result = await fetch(`${baseUrl}/todos?${queryParams.toString()}`)
     .then((res) => {
       return res.json();
