@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
-import { todosService } from "../services/todosService";
-import { Todo } from "../models/todosModel";
 import { errorResponse, successResponse } from "../lib/responseHelper";
 import HttpError from "../lib/HttpError";
+import { todosService } from "../services/todosService";
+import { Todo } from "../models/todosModel";
 
 export const todosController = {
   createTodo: async (req: Request, res: Response) => {
@@ -19,17 +19,20 @@ export const todosController = {
 
   getTodos: async (req: Request, res: Response) => {
     const filter = req.query?.filter || "all";
+    const offset = req.query.offset;
+    const limit = req.query.limit;
 
-    const todos = await todosService.getTodos(filter as string);
+    const todos = await todosService.getTodos({
+      filter: filter as string,
+      limit: limit as string,
+      offset: offset as string,
+    });
 
     if (!todos) {
       throw new HttpError("Todo 찾기 실패", StatusCodes.NOT_FOUND);
     }
 
-    successResponse(res, {
-      data: todos?.todos,
-      metadata: { remain: todos?.remain, total: todos?.total },
-    });
+    successResponse(res, todos);
   },
 
   updateTodo: async (req: Request, res: Response) => {

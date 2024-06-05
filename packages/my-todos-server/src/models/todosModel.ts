@@ -24,16 +24,36 @@ export const todosModel = {
         completed: false,
       },
     });
+    const completedCount = await prisma.todo.count({
+      where: {
+        completed: true,
+      },
+    });
 
-    return { total: todoCount, remain: activeCount };
+    return {
+      total: todoCount,
+      activeCount: activeCount,
+      completedCount: completedCount,
+    };
   },
 
-  getAllTodos: async () => {
-    return await prisma.todo.findMany();
+  getAllTodos: async (limit: string, offset: string) => {
+    return await prisma.todo.findMany({
+      take: parseInt(limit),
+      skip: parseInt(offset),
+      orderBy: {
+        id: "asc",
+      },
+    });
   },
 
-  getActiveTodos: async () => {
+  getActiveTodos: async (limit: string, offset: string) => {
     const activeTodos = await prisma.todo.findMany({
+      take: parseInt(limit),
+      skip: parseInt(offset),
+      orderBy: {
+        id: "asc",
+      },
       where: {
         completed: false,
       },
@@ -42,8 +62,13 @@ export const todosModel = {
     return activeTodos;
   },
 
-  getCompletedTodos: async () => {
+  getCompletedTodos: async (limit: string, offset: string) => {
     const completedTodos = await prisma.todo.findMany({
+      take: parseInt(limit),
+      skip: parseInt(offset),
+      orderBy: {
+        id: "asc",
+      },
       where: {
         completed: true,
       },

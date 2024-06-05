@@ -1,7 +1,8 @@
 import { Response } from "express";
 
 interface Data {
-  data: any;
+  data?: any;
+  todos?: any;
   metadata?: Record<string, any>;
 }
 
