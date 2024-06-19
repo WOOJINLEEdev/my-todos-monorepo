@@ -13,7 +13,11 @@ import { useUpdateTodosAllChecked } from "@/hooks/api/useUpdateTodosAllChecked";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { capitalizeFirstLetter } from "@/utils/common";
 
-import { Todo } from "@/state/useTodoListStore";
+export interface Todo {
+  id: number;
+  todo: string;
+  completed: boolean;
+}
 
 interface FormData {
   todo: string;
@@ -283,7 +287,7 @@ const TodoApiForm = () => {
               })}
         </ul>
 
-        {(total > 0 || (data && data.pages?.length > 0)) && (
+        {(total > 0 || (data && data?.pages[0]?.todos.length > 0)) && (
           <div className="flex justify-between min-h-5 px-4 py-2.5 border border-t-0 border-solid border-gray-200">
             <span>{remain} item left!</span>
 
