@@ -6,11 +6,22 @@ export interface Todo {
 }
 
 export const todosModel = {
-  createTodo: async (todo: Todo) => {
+  createTodo: async ({
+    todo,
+    completed,
+    userId,
+  }: {
+    todo: string;
+    completed: boolean;
+    userId: number;
+  }) => {
     const newTodo = await prisma.todo.create({
       data: {
-        todo: todo.todo,
-        completed: todo.completed,
+        todo: todo,
+        completed: completed,
+        user: {
+          connect: { id: userId },
+        },
       },
     });
 
@@ -37,8 +48,19 @@ export const todosModel = {
     };
   },
 
-  getAllTodos: async (limit: string, offset: string) => {
+  getAllTodos: async ({
+    limit,
+    offset,
+    userId,
+  }: {
+    limit: string;
+    offset: string;
+    userId: number;
+  }) => {
     return await prisma.todo.findMany({
+      where: {
+        userId: userId,
+      },
       take: parseInt(limit),
       skip: parseInt(offset),
       orderBy: {
@@ -47,7 +69,15 @@ export const todosModel = {
     });
   },
 
-  getActiveTodos: async (limit: string, offset: string) => {
+  getActiveTodos: async ({
+    limit,
+    offset,
+    userId,
+  }: {
+    limit: string;
+    offset: string;
+    userId: number;
+  }) => {
     const activeTodos = await prisma.todo.findMany({
       take: parseInt(limit),
       skip: parseInt(offset),
@@ -55,6 +85,7 @@ export const todosModel = {
         id: "asc",
       },
       where: {
+        userId: userId,
         completed: false,
       },
     });
@@ -62,7 +93,15 @@ export const todosModel = {
     return activeTodos;
   },
 
-  getCompletedTodos: async (limit: string, offset: string) => {
+  getCompletedTodos: async ({
+    limit,
+    offset,
+    userId,
+  }: {
+    limit: string;
+    offset: string;
+    userId: number;
+  }) => {
     const completedTodos = await prisma.todo.findMany({
       take: parseInt(limit),
       skip: parseInt(offset),
@@ -70,6 +109,7 @@ export const todosModel = {
         id: "asc",
       },
       where: {
+        userId: userId,
         completed: true,
       },
     });
@@ -77,34 +117,54 @@ export const todosModel = {
     return completedTodos;
   },
 
-  updateTodo: async (id: number, field: Partial<Todo>) => {
-    return await prisma.todo.update({
+  updateTodo: async ({
+    id,
+    field,
+    userId,
+  }: {
+    id: number;
+    field: Partial<Todo>;
+    userId: number;
+  }) => {
+    return await prisma.todo.updateMany({
       where: {
+        userId: userId,
         id: id,
       },
       data: field,
     });
   },
 
-  updateTodosToCompleted: async (completed: boolean) => {
+  updateTodosToCompleted: async ({
+    completed,
+    userId,
+  }: {
+    completed: boolean;
+    userId: number;
+  }) => {
     return await prisma.todo.updateMany({
+      where: {
+        userId: userId,
+      },
       data: {
         completed: completed,
       },
     });
   },
 
-  deleteTodo: async (id: number) => {
+  deleteTodo: async ({ id, userId }: { id: number; userId: number }) => {
     return await prisma.todo.delete({
       where: {
+        userId: userId,
         id: id,
       },
     });
   },
 
-  deleteCompletedTodos: async () => {
+  deleteCompletedTodos: async (userId: number) => {
     return await prisma.todo.deleteMany({
       where: {
+        userId: userId,
         completed: true,
       },
     });

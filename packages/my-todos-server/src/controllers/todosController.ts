@@ -8,7 +8,14 @@ import { Todo } from "../models/todosModel";
 
 export const todosController = {
   createTodo: async (req: Request, res: Response) => {
-    const newTodo = await todosService.addTodoItem(req.body);
+    const { todo, completed } = req.body;
+    const userId = res.locals.userId;
+
+    const newTodo = await todosService.addTodoItem({
+      todo: todo,
+      completed: completed,
+      userId: userId,
+    });
 
     if (!newTodo) {
       throw new HttpError("Todo 추가 실패", StatusCodes.BAD_REQUEST);
@@ -21,11 +28,13 @@ export const todosController = {
     const filter = req.query?.filter || "all";
     const offset = req.query.offset;
     const limit = req.query.limit;
+    const userId = res.locals.userId;
 
     const todos = await todosService.getTodos({
       filter: filter as string,
       limit: limit as string,
       offset: offset as string,
+      userId: userId,
     });
 
     if (!todos) {
@@ -37,6 +46,7 @@ export const todosController = {
 
   updateTodo: async (req: Request, res: Response) => {
     const todoId = parseInt(req.params.id, 10);
+    const userId = res.locals.userId;
 
     const { todo, completed } = req.body;
     if (todo === undefined && completed === undefined) {
@@ -59,7 +69,11 @@ export const todosController = {
       field = { completed: completed };
     }
 
-    const result = await todosService.updateTodoItem(todoId, field);
+    const result = await todosService.updateTodoItem({
+      id: todoId,
+      field,
+      userId,
+    });
 
     if (!result) {
       throw new HttpError(
@@ -75,8 +89,12 @@ export const todosController = {
 
   updateTodosToCompleted: async (req: Request, res: Response) => {
     const { completed } = req.body;
+    const userId = res.locals.userId;
 
-    const result = await todosService.updateTodosToCompleted(completed);
+    const result = await todosService.updateTodosToCompleted({
+      completed,
+      userId,
+    });
 
     if (!result) {
       throw new HttpError(
@@ -90,8 +108,9 @@ export const todosController = {
 
   deleteTodo: async (req: Request, res: Response) => {
     const todoId = parseInt(req.params.id, 10);
+    const userId = res.locals.userId;
 
-    const result = await todosService.deleteTodoItem(todoId);
+    const result = await todosService.deleteTodoItem({ id: todoId, userId });
 
     if (!result) {
       throw new HttpError(
@@ -104,7 +123,8 @@ export const todosController = {
   },
 
   deleteCompletedTodos: async (req: Request, res: Response) => {
-    const result = await todosService.deleteCompletedTodos();
+    const userId = res.locals.userId;
+    const result = await todosService.deleteCompletedTodos(userId);
 
     if (!result) {
       throw new HttpError(

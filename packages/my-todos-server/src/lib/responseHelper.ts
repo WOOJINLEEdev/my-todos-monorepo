@@ -1,14 +1,8 @@
 import { Response } from "express";
 
-interface Data {
-  data?: any;
-  todos?: any;
-  metadata?: Record<string, any>;
-}
-
 export const successResponse = (
   res: Response,
-  data?: Data,
+  data?: any,
   message = "Success",
   statusCode = 200
 ) => {
@@ -32,7 +26,7 @@ export const errorResponse = (
 
 export const validationErrorResponse = (
   res: Response,
-  errors: any,
+  errors?: any,
   message = "Validation failed",
   statusCode = 400
 ) => {

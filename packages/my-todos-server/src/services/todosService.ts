@@ -1,25 +1,43 @@
 import { Todo, todosModel } from "../models/todosModel";
 
 export const todosService = {
-  addTodoItem: async (todo: Todo) => {
-    return await todosModel.createTodo(todo);
+  addTodoItem: async ({
+    todo,
+    completed,
+    userId,
+  }: {
+    todo: string;
+    completed: boolean;
+    userId: number;
+  }) => {
+    return await todosModel.createTodo({
+      todo,
+      completed,
+      userId,
+    });
   },
 
   getTodos: async ({
     filter,
     limit,
     offset,
+    userId,
   }: {
     filter: string;
     limit: string;
     offset: string;
+    userId: number;
   }) => {
     const { total, activeCount, completedCount } =
       await todosModel.getTodoCount();
 
     switch (filter) {
       case "all":
-        const todolist = await todosModel.getAllTodos(limit, offset);
+        const todolist = await todosModel.getAllTodos({
+          limit,
+          offset,
+          userId,
+        });
         const modifiedTodolist = todolist?.map((todo) => ({
           id: todo.id,
           todo: todo.todo,
@@ -37,7 +55,11 @@ export const todosService = {
         };
 
       case "active":
-        const activeTodolist = await todosModel.getActiveTodos(limit, offset);
+        const activeTodolist = await todosModel.getActiveTodos({
+          limit,
+          offset,
+          userId,
+        });
         const modifiedActiveTodolist = activeTodolist?.map((todo) => ({
           id: todo.id,
           todo: todo.todo,
@@ -55,10 +77,11 @@ export const todosService = {
         };
 
       case "completed":
-        const completedTodolist = await todosModel.getCompletedTodos(
+        const completedTodolist = await todosModel.getCompletedTodos({
           limit,
-          offset
-        );
+          offset,
+          userId,
+        });
         const modifiedCompletedTodolist = completedTodolist?.map((todo) => ({
           id: todo.id,
           todo: todo.todo,
@@ -77,16 +100,30 @@ export const todosService = {
         };
     }
   },
-  updateTodoItem: async (id: number, field: Partial<Todo>) => {
-    return await todosModel.updateTodo(id, field);
+  updateTodoItem: async ({
+    id,
+    field,
+    userId,
+  }: {
+    id: number;
+    field: Partial<Todo>;
+    userId: number;
+  }) => {
+    return await todosModel.updateTodo({ id, field, userId });
   },
-  updateTodosToCompleted: async (completed: boolean) => {
-    return await todosModel.updateTodosToCompleted(completed);
+  updateTodosToCompleted: async ({
+    completed,
+    userId,
+  }: {
+    completed: boolean;
+    userId: number;
+  }) => {
+    return await todosModel.updateTodosToCompleted({ completed, userId });
   },
-  deleteTodoItem: async (id: number) => {
-    return await todosModel.deleteTodo(id);
+  deleteTodoItem: async ({ id, userId }: { id: number; userId: number }) => {
+    return await todosModel.deleteTodo({ id, userId });
   },
-  deleteCompletedTodos: async () => {
-    return await todosModel.deleteCompletedTodos();
+  deleteCompletedTodos: async (userId: number) => {
+    return await todosModel.deleteCompletedTodos(userId);
   },
 };
