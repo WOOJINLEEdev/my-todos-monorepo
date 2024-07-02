@@ -5,7 +5,7 @@ export interface Todo {
   completed: boolean;
 }
 
-export const todosModel = {
+export const todoModel = {
   createTodo: async ({
     todo,
     completed,

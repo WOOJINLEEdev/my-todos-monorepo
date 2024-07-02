@@ -2,9 +2,11 @@ import { Response } from "express";
 
 export const successResponse = (
   res: Response,
-  data?: any,
-  message = "Success",
-  statusCode = 200
+  {
+    data,
+    message = "Success",
+    statusCode = 200,
+  }: { data?: any; message?: string; statusCode?: number }
 ) => {
   res.status(statusCode).json({
     status: "success",
@@ -15,8 +17,10 @@ export const successResponse = (
 
 export const errorResponse = (
   res: Response,
-  message = "Something went wrong",
-  statusCode = 500
+  {
+    message = "Something went wrong",
+    statusCode = 500,
+  }: { message?: string; statusCode?: number }
 ) => {
   res.status(statusCode).json({
     status: "error",
@@ -26,9 +30,11 @@ export const errorResponse = (
 
 export const validationErrorResponse = (
   res: Response,
-  errors?: any,
-  message = "Validation failed",
-  statusCode = 400
+  {
+    errors,
+    message = "Validation failed",
+    statusCode = 400,
+  }: { errors?: any; message: string; statusCode?: number }
 ) => {
   res.status(statusCode).json({
     status: "fail",

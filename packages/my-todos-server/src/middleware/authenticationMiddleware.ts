@@ -13,12 +13,10 @@ export function authenticateToken() {
     const accessToken = req.headers.authorization?.split(" ")[1];
 
     if (!accessToken) {
-      return validationErrorResponse(
-        res,
-        undefined,
-        "access token is not provided",
-        StatusCodes.UNAUTHORIZED
-      );
+      return validationErrorResponse(res, {
+        message: "access token is not provided",
+        statusCode: StatusCodes.UNAUTHORIZED,
+      });
     }
 
     try {
@@ -31,12 +29,11 @@ export function authenticateToken() {
       next();
     } catch (err) {
       console.error(err);
-      return validationErrorResponse(
-        res,
-        err,
-        "access token is not valid",
-        StatusCodes.UNAUTHORIZED
-      );
+      return validationErrorResponse(res, {
+        errors: err,
+        message: "access token is not valid",
+        statusCode: StatusCodes.UNAUTHORIZED,
+      });
     }
   };
 }

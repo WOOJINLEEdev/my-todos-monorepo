@@ -2,23 +2,25 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
 import { errorResponse, successResponse } from "../lib/responseHelper";
-import HttpError from "../lib/HttpError";
-import { todosService } from "../services/todosService";
-import { Todo } from "../models/todosModel";
+import { todoService } from "../services/todoService";
+import { Todo } from "../models/todoModel";
 
-export const todosController = {
+export const todoController = {
   createTodo: async (req: Request, res: Response) => {
-    const { todo, completed } = req.body;
+    const { todo, completed }: { todo: string; completed: boolean } = req.body;
     const userId = res.locals.userId;
 
-    const newTodo = await todosService.addTodoItem({
+    const newTodo = await todoService.addTodoItem({
       todo: todo,
       completed: completed,
       userId: userId,
     });
 
     if (!newTodo) {
-      throw new HttpError("Todo 추가 실패", StatusCodes.BAD_REQUEST);
+      return errorResponse(res, {
+        message: "Failed to add todo item",
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
     }
 
     successResponse(res, { data: newTodo });
@@ -30,18 +32,14 @@ export const todosController = {
     const limit = req.query.limit;
     const userId = res.locals.userId;
 
-    const todos = await todosService.getTodos({
+    const todos = await todoService.getTodos({
       filter: filter as string,
       limit: limit as string,
       offset: offset as string,
       userId: userId,
     });
 
-    if (!todos) {
-      throw new HttpError("Todo 찾기 실패", StatusCodes.NOT_FOUND);
-    }
-
-    successResponse(res, todos);
+    successResponse(res, { data: todos });
   },
 
   updateTodo: async (req: Request, res: Response) => {
@@ -49,14 +47,15 @@ export const todosController = {
     const userId = res.locals.userId;
 
     const { todo, completed } = req.body;
+
     if (todo === undefined && completed === undefined) {
-      errorResponse(res, "todo, completed both undefined");
-      return;
+      return errorResponse(res, { message: "todo, completed both undefined" });
     }
 
     if (todo && completed) {
-      errorResponse(res, "todo, completed are not received at the same time");
-      return;
+      return errorResponse(res, {
+        message: "todo, completed are not received at the same time",
+      });
     }
 
     let field: Partial<Todo> = {};
@@ -69,17 +68,17 @@ export const todosController = {
       field = { completed: completed };
     }
 
-    const result = await todosService.updateTodoItem({
+    const result = await todoService.updateTodoItem({
       id: todoId,
       field,
       userId,
     });
 
     if (!result) {
-      throw new HttpError(
-        `Todo 업데이트 실패, id: ${todoId}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      return errorResponse(res, {
+        message: `Failed to update todo item, id: ${todoId}`,
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
     }
 
     successResponse(res, {
@@ -91,48 +90,48 @@ export const todosController = {
     const { completed } = req.body;
     const userId = res.locals.userId;
 
-    const result = await todosService.updateTodosToCompleted({
+    const result = await todoService.updateTodosToCompleted({
       completed,
       userId,
     });
 
     if (!result) {
-      throw new HttpError(
-        "Completed Todo 업데이트 실패",
-        StatusCodes.BAD_REQUEST
-      );
+      return errorResponse(res, {
+        message: "Failed to update completed todo item",
+        statusCode: StatusCodes.BAD_REQUEST,
+      });
     }
 
-    successResponse(res, undefined, "Completed Todos 업데이트 성공");
+    successResponse(res, { message: "Completed Todos 업데이트 성공" });
   },
 
   deleteTodo: async (req: Request, res: Response) => {
     const todoId = parseInt(req.params.id, 10);
     const userId = res.locals.userId;
 
-    const result = await todosService.deleteTodoItem({ id: todoId, userId });
+    const result = await todoService.deleteTodoItem({ id: todoId, userId });
 
     if (!result) {
-      throw new HttpError(
-        `Todo 삭제 실패, id: ${todoId}`,
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      return errorResponse(res, {
+        message: `Failed to delete todo item`,
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
     }
 
-    successResponse(res, undefined, `Todo 삭제 성공, id: ${todoId}`);
+    successResponse(res, { message: `Todo 삭제 성공, id: ${todoId}` });
   },
 
   deleteCompletedTodos: async (req: Request, res: Response) => {
     const userId = res.locals.userId;
-    const result = await todosService.deleteCompletedTodos(userId);
+    const result = await todoService.deleteCompletedTodos(userId);
 
     if (!result) {
-      throw new HttpError(
-        "Completed Todos 삭제 실패",
-        StatusCodes.INTERNAL_SERVER_ERROR
-      );
+      return errorResponse(res, {
+        message: `Failed to delete completed todos`,
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      });
     }
 
-    successResponse(res, undefined, "Completed Todos 삭제 성공");
+    successResponse(res, { message: "Completed Todos 삭제 성공" });
   },
 };

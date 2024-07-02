@@ -6,45 +6,38 @@ import { createTodoSchema } from "../schemas/createTodoSchema";
 import { todoIdSchema } from "../schemas/todoIdSchema";
 import { updateTodosToCompletedSchema } from "../schemas/updateTodosToCompletedSchema";
 import { getTodosSchema } from "../schemas/getTodosSchema";
-import { todosController } from "../controllers/todosController";
+import { todoController } from "../controllers/todoController";
 import { wrapAsync } from "../lib/wrapAsync";
 
 const router = express.Router();
 
+router.use(authenticateToken());
+
 router.post(
   "/",
-  authenticateToken(),
   validateData({ body: createTodoSchema }),
-  wrapAsync(todosController.createTodo)
+  wrapAsync(todoController.createTodo)
 );
 router.get(
   "/",
-  authenticateToken(),
   validateData({ query: getTodosSchema }),
-  wrapAsync(todosController.getTodos)
+  wrapAsync(todoController.getTodos)
 );
 router.patch(
   "/completed",
-  authenticateToken(),
   validateData({ body: updateTodosToCompletedSchema }),
-  wrapAsync(todosController.updateTodosToCompleted)
+  wrapAsync(todoController.updateTodosToCompleted)
 );
 router.put(
   "/:id",
-  authenticateToken(),
   validateData({ params: todoIdSchema }),
-  wrapAsync(todosController.updateTodo)
+  wrapAsync(todoController.updateTodo)
 );
-router.delete(
-  "/completed",
-  authenticateToken(),
-  wrapAsync(todosController.deleteCompletedTodos)
-);
+router.delete("/completed", wrapAsync(todoController.deleteCompletedTodos));
 router.delete(
   "/:id",
-  authenticateToken(),
   validateData({ params: todoIdSchema }),
-  wrapAsync(todosController.deleteTodo)
+  wrapAsync(todoController.deleteTodo)
 );
 
 export default router;

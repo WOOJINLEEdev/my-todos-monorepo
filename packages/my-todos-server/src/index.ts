@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import todosRouter from "./routes/todosRouter";
+import todoRouter from "./routes/todoRouter";
 import authRouter from "./routes/authRouter";
 import errorMiddleware from "./middleware/errorMiddleware";
 
@@ -20,7 +20,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 app.use(errorMiddleware);
-app.use("/todos", todosRouter);
+app.use("/todos", todoRouter);
 app.use("/auth", authRouter);
 
 app.listen(port, () => {

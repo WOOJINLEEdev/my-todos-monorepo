@@ -12,15 +12,20 @@ const errorMiddleware = (
   next: NextFunction
 ) => {
   if (error instanceof HttpError) {
-    return errorResponse(res, error.message, error.statusCode);
+    return errorResponse(res, {
+      message: error.message,
+      statusCode: error.statusCode,
+    });
   } else if (error instanceof DatabaseError) {
-    return errorResponse(
-      res,
-      "Database error occurred",
-      StatusCodes.INTERNAL_SERVER_ERROR
-    );
+    return errorResponse(res, {
+      message: "Database error occurred",
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
   } else {
-    return errorResponse(res, error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+    return errorResponse(res, {
+      message: error.message,
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 

@@ -7,10 +7,10 @@ import { authenticateGoogleUserSchema } from "../schemas/authenticateGoogleUserS
 
 const router = express.Router();
 
-router.post("/refresh", wrapAsync(authController.sendRefreshToken));
+router.post("/refresh", wrapAsync(authController.refreshAccessToken));
 router.get("/google", wrapAsync(authController.getGoogleOAuthUrl));
 router.get(
-  "/google/redirect",
+  "/google/callback",
   validateData({ query: authenticateGoogleUserSchema }),
   wrapAsync(authController.authenticateGoogleUser)
 );

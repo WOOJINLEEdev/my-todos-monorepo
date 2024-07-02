@@ -1,6 +1,6 @@
-import { Todo, todosModel } from "../models/todosModel";
+import { Todo, todoModel } from "../models/todoModel";
 
-export const todosService = {
+export const todoService = {
   addTodoItem: async ({
     todo,
     completed,
@@ -10,7 +10,7 @@ export const todosService = {
     completed: boolean;
     userId: number;
   }) => {
-    return await todosModel.createTodo({
+    return await todoModel.createTodo({
       todo,
       completed,
       userId,
@@ -29,11 +29,11 @@ export const todosService = {
     userId: number;
   }) => {
     const { total, activeCount, completedCount } =
-      await todosModel.getTodoCount();
+      await todoModel.getTodoCount();
 
     switch (filter) {
       case "all":
-        const todolist = await todosModel.getAllTodos({
+        const todolist = await todoModel.getAllTodos({
           limit,
           offset,
           userId,
@@ -42,7 +42,7 @@ export const todosService = {
           id: todo.id,
           todo: todo.todo,
           completed: todo.completed === true,
-          created_at: todo.created_at,
+          created_at: todo.createdAt,
         }));
 
         return {
@@ -55,7 +55,7 @@ export const todosService = {
         };
 
       case "active":
-        const activeTodolist = await todosModel.getActiveTodos({
+        const activeTodolist = await todoModel.getActiveTodos({
           limit,
           offset,
           userId,
@@ -64,7 +64,7 @@ export const todosService = {
           id: todo.id,
           todo: todo.todo,
           completed: todo.completed === true,
-          created_at: todo.created_at,
+          created_at: todo.createdAt,
         }));
 
         return {
@@ -77,7 +77,7 @@ export const todosService = {
         };
 
       case "completed":
-        const completedTodolist = await todosModel.getCompletedTodos({
+        const completedTodolist = await todoModel.getCompletedTodos({
           limit,
           offset,
           userId,
@@ -86,7 +86,7 @@ export const todosService = {
           id: todo.id,
           todo: todo.todo,
           completed: todo.completed === true,
-          created_at: todo.created_at,
+          created_at: todo.createdAt,
         }));
 
         return {
@@ -109,7 +109,7 @@ export const todosService = {
     field: Partial<Todo>;
     userId: number;
   }) => {
-    return await todosModel.updateTodo({ id, field, userId });
+    return await todoModel.updateTodo({ id, field, userId });
   },
   updateTodosToCompleted: async ({
     completed,
@@ -118,12 +118,12 @@ export const todosService = {
     completed: boolean;
     userId: number;
   }) => {
-    return await todosModel.updateTodosToCompleted({ completed, userId });
+    return await todoModel.updateTodosToCompleted({ completed, userId });
   },
   deleteTodoItem: async ({ id, userId }: { id: number; userId: number }) => {
-    return await todosModel.deleteTodo({ id, userId });
+    return await todoModel.deleteTodo({ id, userId });
   },
   deleteCompletedTodos: async (userId: number) => {
-    return await todosModel.deleteCompletedTodos(userId);
+    return await todoModel.deleteCompletedTodos(userId);
   },
 };
